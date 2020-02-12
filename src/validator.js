@@ -1,10 +1,6 @@
 import * as yup from 'yup';
 import { findIndex } from 'lodash';
-
-const errorMessage = {
-  invalidUrl: 'Enter a valid address',
-  duplicateUrl: 'This address has already been added to the feed. Enter the new address.',
-};
+import i18next from 'i18next';
 
 const checkUrl = yup.object().shape({
   url: yup
@@ -31,10 +27,10 @@ const checkValidateUrl = (url, channels) => {
     .then((valid) => {
 
       if (!valid) 
-        errors.invalid = errorMessage.invalidUrl;
+        errors.invalid = i18next.t('errorMessage.invalidUrl');
             
       if (isDuplicateUrl(url, channels)) 
-        errors.duplicate = errorMessage.duplicateUrl;
+        errors.duplicate = i18next.t('errorMessage.duplicateUrl');
             
       return errors;
     });

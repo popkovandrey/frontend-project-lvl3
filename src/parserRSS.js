@@ -12,8 +12,9 @@ export default (inputData) => {
       const title = item.querySelector('title').textContent;
       const link = item.querySelector('link').textContent;
       const description = item.querySelector('description').textContent;
+      const pubDate = item.querySelector('pubDate').textContent;
 
-      return { title, link, description };
+      return { title, link, description, pubDate };
     });
     result.items = elems;
   
