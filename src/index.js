@@ -10,8 +10,8 @@ i18next.init(
   {
     lng: 'en',
     resources,
-  }
-)
+  },
+);
 
 const proxy = 'cors-anywhere.herokuapp.com';
 
@@ -22,10 +22,10 @@ const state = {
     urlValue: '',
     errors: {},
     alertMsg: {
-        text: '',
-        type: null,
-        msCount: 5000,
-    }
+      text: '',
+      type: null,
+      msCount: 5000,
+    },
   },
   feed: {
     update: null,
@@ -43,53 +43,53 @@ input.addEventListener('input', (e) => {
   checkValidateUrl(state.form.urlValue, state.feed.channels)
     .then((errors) => {
       state.form.errors = errors;
-  
       state.form.valid = _.isEqual(errors, {});
     });
 });
 
 const setAlertMessage = (text, statusText, type, inputValue, msCount) => {
-  console.log('inputValue', inputValue)
+  console.log('inputValue', inputValue);
   const textMapping = {
-      success: i18next.t('requestStatus.success', {statusText, inputValue, interpolation: { escapeValue: false }}),
-      badRequest: i18next.t('requestStatus.badRequest', {statusText, inputValue, interpolation: { escapeValue: false }}),
-      emptyResponse: i18next.t('requestStatus.emptyResponse'),
+    success: i18next.t('requestStatus.success', { statusText, inputValue, interpolation: { escapeValue: false } }),
+    badRequest: i18next.t('requestStatus.badRequest', { statusText, inputValue, interpolation: { escapeValue: false } }),
+    emptyResponse: i18next.t('requestStatus.emptyResponse'),
   };
 
   state.form.alertMsg.msCount = msCount;
   state.form.alertMsg.type = type;
   state.form.alertMsg.text = '';
   state.form.alertMsg.text = textMapping[text];
-}
+};
 
 const updateFeed = (url) => {
-  const channel = _.find(state.feed.channels, {url});
-  
-  if (!channel) 
+  const channel = _.find(state.feed.channels, { url });
+
+  if (!channel) {
     return;
+  }
 
   axios.get(`https://${proxy}/${url}`)
     .then((response) => {
       const feedData = parseRSS(response);
 
-      const date = channel.data['items'][0].pubDate;
-      const items = feedData['items'].reverse();
-      const prevSizeArr = channel.data['items'].length; 
+      const date = channel.data.items[0].pubDate;
+      const items = feedData.items.reverse();
+      const prevSizeArr = channel.data.items.length;
 
       items.forEach((item) => {
         if (item.pubDate > date) {
-          channel.data['items'].unshift(item);
+          channel.data.items.unshift(item);
         }
       });
 
-      if (prevSizeArr < channel.data['items'].length) {
+      if (prevSizeArr < channel.data.items.length) {
         state.feed.update = Date.now();
         channel.updated = new Date();
         console.log('rePaint');
-      }      
+      }
     })
     .catch((err) => {
-      console.log(err); 
+      console.log(err);
     });
 
   console.log('timeout');
@@ -101,18 +101,21 @@ form.addEventListener('submit', (e) => {
   e.preventDefault();
 
   const url = state.form.urlValue.trim();
-  
-  if (url === '')
+
+  if (url === '') {
     return;
+  }
 
   state.form.process = 'requested';
-  
+
   const channel = {
     url,
   };
 
   axios.get(`https://${proxy}/${url}`)
-    .finally(() => state.form.process = 'executed')
+    .finally(() => {
+      state.form.process = 'executed';
+    })
     .then((response) => {
       const feedData = parseRSS(response);
       channel.data = feedData;
@@ -127,15 +130,21 @@ form.addEventListener('submit', (e) => {
       console.log(state.feed.channels, state.feed.update);
     })
     .catch((err) => {
-      if (err.response)
+      if (err.response) {
         setAlertMessage('badRequest', `${err.response.request.statusText}. `, 'alert-danger', url, 5000);
-      else
-        setAlertMessage('emptyResponse', ``, 'alert-danger', url, 5000); 
+      } else {
+        setAlertMessage('emptyResponse', '', 'alert-danger', url, 5000);
+      }
 
-      console.log(err, err.response); 
+      console.log(err, err.response);
     });
-  
+
   state.form.urlValue = '';
 });
 
-render(state);
+const handleOnClickChannel = (url) => {
+  state.feed.selectedChannel = url;
+  state.feed.update = new Date();
+};
+
+render(state, handleOnClickChannel);

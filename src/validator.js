@@ -7,8 +7,7 @@ const checkUrl = yup.object().shape({
     .string()
     .url()
     .required(),
-  }
-);
+});
 
 const isValidUrl = (url) => {
   const obj = { url };
@@ -25,13 +24,14 @@ const checkValidateUrl = (url, channels) => {
 
   return isValidUrl(url)
     .then((valid) => {
-
-      if (!valid) 
+      if (!valid) {
         errors.invalid = i18next.t('errorMessage.invalidUrl');
-            
-      if (isDuplicateUrl(url, channels)) 
+      }
+
+      if (isDuplicateUrl(url, channels)) {
         errors.duplicate = i18next.t('errorMessage.duplicateUrl');
-            
+      }
+
       return errors;
     });
 };
