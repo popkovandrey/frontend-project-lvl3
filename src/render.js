@@ -3,6 +3,8 @@ import { watch } from 'melanke-watchjs';
 import { isEqual } from 'lodash';
 import i18next from 'i18next';
 
+const addLeadingZero = (num) => (num < 10 ? `0${num}` : num.toString());
+
 const render = (state, handleOnClickChannel) => {
   const input = document.getElementById('url');
   const submit = document.getElementById('btn_submit');
@@ -80,9 +82,10 @@ const render = (state, handleOnClickChannel) => {
         a.textContent = `# ${a.textContent}`;
       }
 
-      const hh = channel.updated.getHours() < 10 ? `0${channel.updated.getHours()}` : channel.updated.getHours();
-      const mm = channel.updated.getMinutes() < 10 ? `0${channel.updated.getMinutes()}` : channel.updated.getMinutes();
-      const ss = channel.updated.getSeconds() < 10 ? `0${channel.updated.getSeconds()}` : channel.updated.getSeconds();
+      const date = channel.updated;
+      const hh = addLeadingZero(date.getHours());
+      const mm = addLeadingZero(date.getMinutes());
+      const ss = addLeadingZero(date.getSeconds());
 
       h6.textContent = `${channel.data.description} [ ${channel.data.items.length} шт., ${hh}:${mm}:${ss} ]`;
       h4.append(a);

@@ -48,7 +48,6 @@ input.addEventListener('input', (e) => {
 });
 
 const setAlertMessage = (text, statusText, type, inputValue, msCount) => {
-  console.log('inputValue', inputValue);
   const textMapping = {
     success: i18next.t('requestStatus.success', { statusText, inputValue, interpolation: { escapeValue: false } }),
     badRequest: i18next.t('requestStatus.badRequest', { statusText, inputValue, interpolation: { escapeValue: false } }),
@@ -85,14 +84,11 @@ const updateFeed = (url) => {
       if (prevSizeArr < channel.data.items.length) {
         state.feed.update = Date.now();
         channel.updated = new Date();
-        console.log('rePaint');
       }
     })
     .catch((err) => {
-      console.log(err);
+      throw err;
     });
-
-  console.log('timeout');
 
   setTimeout(() => updateFeed(url), 5000);
 };
@@ -126,8 +122,6 @@ form.addEventListener('submit', (e) => {
       state.feed.selectedChannel = url;
 
       updateFeed(url);
-
-      console.log(state.feed.channels, state.feed.update);
     })
     .catch((err) => {
       if (err.response) {
@@ -136,7 +130,7 @@ form.addEventListener('submit', (e) => {
         setAlertMessage('emptyResponse', '', 'alert-danger', url, 5000);
       }
 
-      console.log(err, err.response);
+      throw err;
     });
 
   state.form.urlValue = '';
