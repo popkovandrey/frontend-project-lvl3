@@ -105,9 +105,6 @@ form.addEventListener('submit', (e) => {
   if (url === '')
     return;
 
-  //if (_.findIndex(state.feed.channels, { url: inputValue }) !== -1)
-  //  input.oninput();
-
   state.form.process = 'requested';
   
   const channel = {

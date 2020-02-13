@@ -63,22 +63,26 @@ const render = (state) => {
     channels.forEach((channel) => {
       const a = document.createElement('a');
       a.setAttribute('href', '#');
-      a.setAttribute('title', channel.data['description']);
       a.setAttribute('data-url', channel.url);
+      a.textContent = channel.data['title'];
 
+      const p = document.createElement('p');
+      const h4 = document.createElement('h4');
+      const h6 = document.createElement('h6');
+      
+      if (state.feed.selectedChannel === channel.url) {
+        a.setAttribute('style', 'color: red');
+        a.textContent = `# ${a.textContent}`
+      }
+      
       const hh = channel.updated.getHours() < 10 ? '0' + channel.updated.getHours() : channel.updated.getHours();
       const mm = channel.updated.getMinutes() < 10 ? '0' + channel.updated.getMinutes() : channel.updated.getMinutes();
       const ss = channel.updated.getSeconds() < 10 ? '0' + channel.updated.getSeconds() : channel.updated.getSeconds();
 
-      a.textContent = `${channel.data['title']} [ ${channel.data['items'].length} шт. / ${hh}:${mm}:${ss} ]`;
-      const p = document.createElement('p');
-      
-      if (state.feed.selectedChannel === channel.url) {
-        a.setAttribute('style', 'color: red');
-        a.textContent = `> ${a.textContent}`
-      }
-      
-      p.append(a);
+      h6.textContent = `${channel.data['description']} [ ${channel.data['items'].length} шт., ${hh}:${mm}:${ss} ]`;
+      h4.append(a);
+      p.append(h4);
+      p.append(h6);
       divChannels.append(p);
 
       a.addEventListener('click', (evt) => {
