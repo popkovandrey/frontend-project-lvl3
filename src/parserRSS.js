@@ -1,6 +1,6 @@
-export default (inputData) => {
+export default (data) => {
   const domparser = new DOMParser();
-  const doc = domparser.parseFromString(inputData.data, 'text/xml');
+  const doc = domparser.parseFromString(data, 'text/xml');
   const result = {};
 
   result.title = doc.querySelector('title').textContent;

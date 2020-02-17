@@ -22,9 +22,7 @@ const render = (state, handleOnClickChannel) => {
       input.value = '';
       submit.textContent = i18next.t('statusRequested');
       submit.disabled = true;
-    }
-
-    if (newvalue === 'executed') {
+    } else if (newvalue === 'executed') {
       submit.textContent = i18next.t('defaultValBtnAddChannel');
       submit.disabled = false;
     }
@@ -49,7 +47,13 @@ const render = (state, handleOnClickChannel) => {
       return;
     }
 
-    divAlert.textContent = newvalue;
+    const textMapping = {
+      success: i18next.t('requestStatus.success', { requestStatusText: state.form.requestStatusText, interpolation: { escapeValue: false } }),
+      badRequest: i18next.t('requestStatus.badRequest', { requestStatusText: state.form.requestStatusText, interpolation: { escapeValue: false } }),
+      emptyResponse: i18next.t('requestStatus.emptyResponse'),
+    };
+
+    divAlert.textContent = textMapping[newvalue];
     divAlert.removeAttribute('class');
     divAlert.setAttribute('class', 'alert');
     divAlert.classList.add(state.form.alertMsg.type);
@@ -93,16 +97,10 @@ const render = (state, handleOnClickChannel) => {
       p.append(h6);
       divChannels.append(p);
 
-      /* a.addEventListener('click', (evt) => {
-        evt.preventDefault();
-
-        state.feed.selectedChannel = channel.url;
-        state.feed.update = new Date();
-      }); */
       a.addEventListener('click', (evt) => {
         evt.preventDefault();
 
-        handleOnClickChannel(channel.url);
+        handleOnClickChannel(channel.url, state);
       });
 
       if (channel.url === state.feed.selectedChannel) {
