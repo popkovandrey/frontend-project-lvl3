@@ -12,15 +12,11 @@ const updateFeed = (url, state) => {
   const { feed } = state;
   const channel = _.find(feed.channels, { url });
 
-  if (!channel) {
-    return;
-  }
+  if (!channel) return;
 
   const { data } = _.find(feed.posts, { id: channel.postsId });
 
-  if (!data) {
-    return;
-  }
+  if (!data) return;
 
   axios.get(`${proxy}/${url}`)
     .then((response) => {
@@ -30,9 +26,9 @@ const updateFeed = (url, state) => {
       const newsInReverseOrder = feedData.items.reverse();
       const prevSizeArr = data.items.length;
 
-      newsInReverseOrder.forEach((news) => {
-        if (news.pubDate > latestNews.pubDate) {
-          data.items.unshift(news);
+      newsInReverseOrder.forEach((post) => {
+        if (post.pubDate > latestNews.pubDate) {
+          data.items.unshift(post);
         }
       });
 
@@ -62,10 +58,7 @@ const getFeed = (url, state) => {
     .then((response) => {
       const id = _.uniqueId();
       const feedData = parseRSS(response.data);
-      feed.posts.push({
-        id,
-        data: feedData,
-      });
+      feed.posts.push({ id, data: feedData });
       channel.postsId = id;
       channel.updated = new Date();
       feed.channels.push(channel);
@@ -125,9 +118,7 @@ const app = () => {
 
     const url = state.form.urlValue.trim();
 
-    if (url === '') {
-      return;
-    }
+    if (url === '') return;
 
     getFeed(url, state);
   });

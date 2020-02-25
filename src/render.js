@@ -19,9 +19,7 @@ const render = (state, handleOnClickChannel, texts) => {
   });
 
   watch(state.feed, 'statusRequest', (prop, action, newvalue, oldvalue) => {
-    if (newvalue === {}) {
-      return;
-    }
+    if (newvalue === {}) return;
 
     const textMapping = {
       success: texts('requestStatus.success'),
@@ -76,9 +74,7 @@ const render = (state, handleOnClickChannel, texts) => {
   watch(state.feed, 'update', () => {
     const { channels, posts } = state.feed;
 
-    if (_.isEqual(channels, [])) {
-      return;
-    }
+    if (_.isEqual(channels, [])) return;
 
     divChannels.innerHTML = '';
     divItems.innerHTML = '';

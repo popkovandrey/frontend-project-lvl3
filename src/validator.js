@@ -10,6 +10,7 @@ const isValidUrl = (url) => {
     if (err.name === 'ValidationError') {
       return false;
     }
+
     throw err;
   }
 
