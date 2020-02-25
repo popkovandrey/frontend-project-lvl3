@@ -6,7 +6,7 @@ import parseRSS from './parserRSS';
 import render from './render';
 import resources from './locales';
 
-const proxy = 'cors-anywhere.herokuapp.com';
+const proxy = 'https://cors-anywhere.herokuapp.com';
 
 const updateFeed = (url, state) => {
   const { feed } = state;
@@ -16,21 +16,27 @@ const updateFeed = (url, state) => {
     return;
   }
 
-  axios.get(`https://${proxy}/${url}`)
+  const { data } = _.find(feed.posts, { id: channel.postsId });
+
+  if (!data) {
+    return;
+  }
+
+  axios.get(`${proxy}/${url}`)
     .then((response) => {
       const feedData = parseRSS(response.data);
 
-      const date = channel.data.items[0].pubDate;
-      const items = feedData.items.reverse();
-      const prevSizeArr = channel.data.items.length;
+      const latestNews = _.head(data.items);
+      const newsInReverseOrder = feedData.items.reverse();
+      const prevSizeArr = data.items.length;
 
-      items.forEach((item) => {
-        if (item.pubDate > date) {
-          channel.data.items.unshift(item);
+      newsInReverseOrder.forEach((news) => {
+        if (news.pubDate > latestNews.pubDate) {
+          data.items.unshift(news);
         }
       });
 
-      if (prevSizeArr < channel.data.items.length) {
+      if (prevSizeArr < data.items.length) {
         feed.update = Date.now();
         channel.updated = new Date();
       }
@@ -42,14 +48,41 @@ const updateFeed = (url, state) => {
   setTimeout(() => updateFeed(url, state), 5000);
 };
 
-const setAlertMessage = (text, requestStatusText, type, msCount, state) => {
-  const { form } = state;
+const getFeed = (url, state) => {
+  const { form, feed } = state;
 
-  form.alertMsg.msCount = msCount;
-  form.alertMsg.type = type;
-  form.alertMsg.text = '';
-  form.alertMsg.text = text;
-  form.alertMsg.requestStatusText = requestStatusText;
+  form.processState = 'requested';
+
+  const channel = { url };
+
+  axios.get(`${proxy}/${url}`)
+    .finally(() => {
+      form.processState = 'executed';
+    })
+    .then((response) => {
+      const id = _.uniqueId();
+      const feedData = parseRSS(response.data);
+      feed.posts.push({
+        id,
+        data: feedData,
+      });
+      channel.postsId = id;
+      channel.updated = new Date();
+      feed.channels.push(channel);
+      feed.statusRequest = { status: 'success', message: '' };
+      feed.update = Date.now();
+      feed.selectedChannel = url;
+
+      feed.goodRequest = Date.now();
+      form.urlValue = '';
+
+      updateFeed(url, state);
+    })
+    .catch((err) => {
+      feed.statusRequest = { status: 'bad', message: err.message };
+
+      throw err;
+    });
 };
 
 const handleOnClickChannel = (url, state) => {
@@ -60,30 +93,20 @@ const handleOnClickChannel = (url, state) => {
 };
 
 const app = () => {
-  i18next.init(
-    {
-      lng: 'en',
-      resources,
-    },
-  );
-
   const state = {
     form: {
-      process: null,
+      processState: null,
       valid: null,
       urlValue: '',
       errors: {},
-      alertMsg: {
-        text: '',
-        requestStatusText: '',
-        type: null,
-        msCount: 5000,
-      },
     },
     feed: {
+      goodRequest: null,
       update: null,
       selectedChannel: '',
       channels: [],
+      posts: [],
+      statusRequest: {},
     },
   };
 
@@ -92,12 +115,9 @@ const app = () => {
 
   input.addEventListener('input', (e) => {
     state.form.urlValue = e.target.value;
-
-    checkValidateUrl(state.form.urlValue, state.feed.channels)
-      .then((errors) => {
-        state.form.errors = errors;
-        state.form.valid = _.isEqual(errors, {});
-      });
+    const errors = checkValidateUrl(state.form.urlValue, state.feed.channels);
+    state.form.errors = errors;
+    state.form.valid = _.isEqual(errors, {});
   });
 
   form.addEventListener('submit', (e) => {
@@ -109,41 +129,17 @@ const app = () => {
       return;
     }
 
-    state.form.process = 'requested';
-
-    const channel = {
-      url,
-    };
-
-    axios.get(`https://${proxy}/${url}`)
-      .finally(() => {
-        state.form.process = 'executed';
-      })
-      .then((response) => {
-        const feedData = parseRSS(response.data);
-        channel.data = feedData;
-        channel.updated = new Date();
-        state.feed.channels.push(channel);
-        setAlertMessage('success', '', 'alert-success', 5000, state);
-        state.feed.update = Date.now();
-        state.feed.selectedChannel = url;
-
-        updateFeed(url, state);
-      })
-      .catch((err) => {
-        if (err.response) {
-          setAlertMessage('badRequest', `${err.response.request.statusText}. `, 'alert-danger', 5000, state);
-        } else {
-          setAlertMessage('emptyResponse', '', 'alert-danger', 5000, state);
-        }
-
-        throw err;
-      });
-
-    state.form.urlValue = '';
+    getFeed(url, state);
   });
 
-  render(state, handleOnClickChannel);
+  i18next.init(
+    {
+      lng: 'en',
+      resources,
+    },
+  ).then((texts) => {
+    render(state, handleOnClickChannel, texts);
+  });
 };
 
 export default app;

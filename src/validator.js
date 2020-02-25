@@ -1,20 +1,19 @@
 import * as yup from 'yup';
 import { findIndex } from 'lodash';
-import i18next from 'i18next';
 
-const checkUrl = yup.object().shape({
-  url: yup
-    .string()
-    .url()
-    .required(),
-});
+const schemaCheckUrl = yup.string().url().required();
 
 const isValidUrl = (url) => {
-  const obj = { url };
+  try {
+    schemaCheckUrl.validateSync(url);
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      return false;
+    }
+    throw err;
+  }
 
-  return checkUrl
-    .isValid(obj)
-    .then((valid) => valid);
+  return true;
 };
 
 const isDuplicateUrl = (url, channels) => findIndex(channels, { url }) !== -1;
@@ -22,18 +21,15 @@ const isDuplicateUrl = (url, channels) => findIndex(channels, { url }) !== -1;
 const checkValidateUrl = (url, channels) => {
   const errors = {};
 
-  return isValidUrl(url)
-    .then((valid) => {
-      if (!valid) {
-        errors.invalid = i18next.t('errorMessage.invalidUrl');
-      }
+  if (!isValidUrl(url)) {
+    errors.invalid = 'invalidUrl';
+  }
 
-      if (isDuplicateUrl(url, channels)) {
-        errors.duplicate = i18next.t('errorMessage.duplicateUrl');
-      }
+  if (isDuplicateUrl(url, channels)) {
+    errors.duplicate = 'duplicateUrl';
+  }
 
-      return errors;
-    });
+  return errors;
 };
 
 export default checkValidateUrl;

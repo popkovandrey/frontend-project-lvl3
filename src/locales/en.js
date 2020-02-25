@@ -5,9 +5,8 @@ export default {
       duplicateUrl: 'This address has already been added to the feed. Enter the new address.',
     },
     requestStatus: {
-      success: 'Success. {{requestStatusText}}The channel successfully added to the list.',
-      badRequest: 'Request failed. {{requestStatusText}}The channel was not added to the list.',
-      emptyResponse: 'Empty response. Enter the url carefully.',
+      success: 'Success. The channel successfully added to the list.',
+      bad: 'Request failed ({{errMessage}}). The channel was not added to the list.',
     },
     statusRequested: 'requested...',
     defaultValBtnAddChannel: 'Add channel',

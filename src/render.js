@@ -1,11 +1,8 @@
 /* eslint no-unused-vars: 0 */
 import { watch } from 'melanke-watchjs';
-import { isEqual } from 'lodash';
-import i18next from 'i18next';
+import _ from 'lodash';
 
-const addLeadingZero = (num) => (num < 10 ? `0${num}` : num.toString());
-
-const render = (state, handleOnClickChannel) => {
+const render = (state, handleOnClickChannel, texts) => {
   const input = document.getElementById('url');
   const submit = document.getElementById('btn_submit');
   const errorDiv = document.getElementById('err_div');
@@ -17,24 +14,58 @@ const render = (state, handleOnClickChannel) => {
     submit.disabled = !state.form.valid;
   });
 
-  watch(state.form, 'process', (prop, action, newvalue, oldvalue) => {
-    if (newvalue === 'requested') {
-      input.value = '';
-      submit.textContent = i18next.t('statusRequested');
-      submit.disabled = true;
-    } else if (newvalue === 'executed') {
-      submit.textContent = i18next.t('defaultValBtnAddChannel');
-      submit.disabled = false;
+  watch(state.feed, 'goodRequest', () => {
+    input.value = '';
+  });
+
+  watch(state.feed, 'statusRequest', (prop, action, newvalue, oldvalue) => {
+    if (newvalue === {}) {
+      return;
+    }
+
+    const textMapping = {
+      success: texts('requestStatus.success'),
+      bad: texts('requestStatus.bad', { errMessage: newvalue.message, interpolation: { escapeValue: false } }),
+    };
+
+    const typeAlertMapping = {
+      success: 'alert-success',
+      bad: 'alert-danger',
+    };
+
+    divAlert.textContent = textMapping[newvalue.status];
+    divAlert.removeAttribute('class');
+    divAlert.setAttribute('class', 'alert');
+    divAlert.classList.add(typeAlertMapping[newvalue.status]);
+    divAlert.removeAttribute('hidden');
+
+    setTimeout(() => divAlert.setAttribute('hidden', ''), 5000);
+  });
+
+
+  watch(state.form, 'processState', (prop, action, newvalue, oldvalue) => {
+    switch (newvalue) {
+      case 'requested':
+        submit.textContent = texts('statusRequested');
+        submit.disabled = true;
+        break;
+      case 'executed':
+        submit.textContent = texts('defaultValBtnAddChannel');
+        submit.disabled = false;
+        break;
+      default:
+        break;
     }
   });
 
   watch(state.form, 'errors', () => {
-    if (isEqual(state.form.errors, {})) {
+    if (_.isEqual(state.form.errors, {})) {
       if (input.classList.contains('is-invalid')) {
         input.classList.remove('is-invalid');
       }
     } else {
-      [errorDiv.textContent] = Object.values(state.form.errors);
+      const [err] = Object.values(state.form.errors);
+      errorDiv.textContent = texts(`errorMessage.${err}`);
 
       if (!input.classList.contains('is-invalid')) {
         input.classList.add('is-invalid');
@@ -42,29 +73,10 @@ const render = (state, handleOnClickChannel) => {
     }
   });
 
-  watch(state.form.alertMsg, 'text', (prop, action, newvalue, oldvalue) => {
-    if (newvalue === '') {
-      return;
-    }
-
-    const textMapping = {
-      success: i18next.t('requestStatus.success', { requestStatusText: state.form.requestStatusText, interpolation: { escapeValue: false } }),
-      badRequest: i18next.t('requestStatus.badRequest', { requestStatusText: state.form.requestStatusText, interpolation: { escapeValue: false } }),
-      emptyResponse: i18next.t('requestStatus.emptyResponse'),
-    };
-
-    divAlert.textContent = textMapping[newvalue];
-    divAlert.removeAttribute('class');
-    divAlert.setAttribute('class', 'alert');
-    divAlert.classList.add(state.form.alertMsg.type);
-    divAlert.removeAttribute('hidden');
-    setTimeout(() => divAlert.setAttribute('hidden', ''), state.form.alertMsg.msCount);
-  });
-
   watch(state.feed, 'update', () => {
-    const { channels } = state.feed;
+    const { channels, posts } = state.feed;
 
-    if (isEqual(channels, [])) {
+    if (_.isEqual(channels, [])) {
       return;
     }
 
@@ -72,10 +84,12 @@ const render = (state, handleOnClickChannel) => {
     divItems.innerHTML = '';
 
     channels.forEach((channel) => {
+      const { data } = _.find(posts, { id: channel.postsId });
+
       const a = document.createElement('a');
       a.setAttribute('href', '#');
       a.setAttribute('data-url', channel.url);
-      a.textContent = channel.data.title;
+      a.textContent = data.title;
 
       const p = document.createElement('p');
       const h4 = document.createElement('h4');
@@ -87,11 +101,11 @@ const render = (state, handleOnClickChannel) => {
       }
 
       const date = channel.updated;
-      const hh = addLeadingZero(date.getHours());
-      const mm = addLeadingZero(date.getMinutes());
-      const ss = addLeadingZero(date.getSeconds());
+      const hh = date.getHours().toString().padStart(2, '0');
+      const mm = date.getMinutes().toString().padStart(2, '0');
+      const ss = date.getSeconds().toString().padStart(2, '0');
 
-      h6.textContent = `${channel.data.description} [ ${channel.data.items.length} шт., ${hh}:${mm}:${ss} ]`;
+      h6.textContent = `${data.description} [ ${data.items.length} шт., ${hh}:${mm}:${ss} ]`;
       h4.append(a);
       p.append(h4);
       p.append(h6);
@@ -106,8 +120,8 @@ const render = (state, handleOnClickChannel) => {
       if (channel.url === state.feed.selectedChannel) {
         let strItems = '';
 
-        channel.data.items.forEach((item) => {
-          strItems = `${strItems}<p><a href="${item.link}" title="${item.description}" 
+        data.items.forEach((item) => {
+          strItems = `${strItems}<p><a href="${item.link}" title="${item.description}"
            target="_blank">${item.title}</a></p>`;
         });
 
