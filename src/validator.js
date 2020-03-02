@@ -1,25 +1,28 @@
 import * as yup from 'yup';
-import { findIndex } from 'lodash';
+// import { findIndex } from 'lodash';
 
-const schemaCheckUrl = yup.string().url().required();
+/* const schemaCheckUrl = yup.string().url().required();
 
 const isValidUrl = (url) => {
   try {
     schemaCheckUrl.validateSync(url);
   } catch (err) {
-    if (err.name === 'ValidationError') {
-      return false;
-    }
-
-    throw err;
+    console.log(err);
+    return false;
   }
 
   return true;
 };
 
-const isDuplicateUrl = (url, channels) => findIndex(channels, { url }) !== -1;
+const isDuplicateUrl = (u, channels) => {
+  // findIndex(channels, { url }) !== -1;
+  const urls = channels.map(({ url }) => url);
+  console.log(urls, schemaCheckUrl.oneOf(urls).isValid(u));
+  schemaCheckUrl.oneOf(urls).isValid(u)
+    .then((valid) => valid);
+};
 
-const checkValidateUrl = (url, channels) => {
+const validateUrl = (url, channels) => {
   const errors = {};
 
   if (!isValidUrl(url)) {
@@ -31,6 +34,13 @@ const checkValidateUrl = (url, channels) => {
   }
 
   return errors;
-};
+}; */
 
-export default checkValidateUrl;
+export default (url, listUrls) => {
+  yup
+    .string()
+    .url()
+    .required()
+    .notOneOf(listUrls)
+    .validateSync(url);
+};

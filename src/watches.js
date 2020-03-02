@@ -1,8 +1,9 @@
-/* eslint no-unused-vars: 0 */
 import { watch } from 'melanke-watchjs';
 import _ from 'lodash';
+import { format } from 'date-fns';
 
-const render = (state, handleOnClickChannel, texts) => {
+const setWatches = (state, handleOnClickChannel, texts) => {
+  const { feed, form } = state;
   const input = document.getElementById('url');
   const submit = document.getElementById('btn_submit');
   const errorDiv = document.getElementById('err_div');
@@ -10,15 +11,17 @@ const render = (state, handleOnClickChannel, texts) => {
   const divChannels = document.getElementById('col_channels');
   const divItems = document.getElementById('col_items');
 
-  watch(state.form, 'valid', () => {
-    submit.disabled = !state.form.valid;
+  watch(form, 'valid', () => {
+    submit.disabled = !form.valid;
   });
 
-  watch(state.feed, 'goodRequest', () => {
-    input.value = '';
+  watch(form, 'urlValue', () => {
+    input.value = form.urlValue;
   });
 
-  watch(state.feed, 'statusRequest', (prop, action, newvalue, oldvalue) => {
+  watch(feed, 'statusRequest', () => {
+    const newvalue = feed.statusRequest;
+
     if (newvalue === {}) return;
 
     const textMapping = {
@@ -41,38 +44,46 @@ const render = (state, handleOnClickChannel, texts) => {
   });
 
 
-  watch(state.form, 'processState', (prop, action, newvalue, oldvalue) => {
-    switch (newvalue) {
-      case 'requested':
+  watch(form, 'processState', () => {
+    const { processState } = form;
+
+    switch (processState) {
+      case 'sending':
         submit.textContent = texts('statusRequested');
         submit.disabled = true;
+        input.disabled = true;
         break;
-      case 'executed':
+      case 'filling':
         submit.textContent = texts('defaultValBtnAddChannel');
         submit.disabled = false;
+        input.disabled = false;
+        break;
+      case 'finished':
+        submit.textContent = texts('defaultValBtnAddChannel');
+        submit.disabled = true;
+        input.disabled = false;
         break;
       default:
-        break;
+        throw new Error(`Unknown processState form: ${processState}!`);
     }
   });
 
-  watch(state.form, 'errors', () => {
-    if (_.isEqual(state.form.errors, {})) {
-      if (input.classList.contains('is-invalid')) {
-        input.classList.remove('is-invalid');
-      }
-    } else {
-      const [err] = Object.values(state.form.errors);
-      errorDiv.textContent = texts(`errorMessage.${err}`);
+  watch(form, 'errors', () => {
+    input.classList.remove('is-invalid');
 
-      if (!input.classList.contains('is-invalid')) {
-        input.classList.add('is-invalid');
-      }
+    if (form.urlValue === '' || form.errors.length === 0) {
+      return;
     }
+
+    const [err] = form.errors;
+
+    errorDiv.textContent = texts(`errorMessage.${err}`);
+
+    input.classList.add('is-invalid');
   });
 
-  watch(state.feed, 'update', () => {
-    const { channels, posts } = state.feed;
+  watch(feed, 'needToUpdated', () => {
+    const { channels, posts } = feed;
 
     if (_.isEqual(channels, [])) return;
 
@@ -91,17 +102,12 @@ const render = (state, handleOnClickChannel, texts) => {
       const h4 = document.createElement('h4');
       const h6 = document.createElement('h6');
 
-      if (state.feed.selectedChannel === channel.url) {
+      if (feed.selectedChannel === channel.url) {
         a.setAttribute('style', 'color: red');
         a.textContent = `# ${a.textContent}`;
       }
 
-      const date = channel.updated;
-      const hh = date.getHours().toString().padStart(2, '0');
-      const mm = date.getMinutes().toString().padStart(2, '0');
-      const ss = date.getSeconds().toString().padStart(2, '0');
-
-      h6.textContent = `${data.description} [ ${data.items.length} шт., ${hh}:${mm}:${ss} ]`;
+      h6.textContent = `${data.description} [ ${data.items.length} шт., ${format(channel.updated, 'HH:mm:ss')} ]`;
       h4.append(a);
       p.append(h4);
       p.append(h6);
@@ -113,7 +119,7 @@ const render = (state, handleOnClickChannel, texts) => {
         handleOnClickChannel(channel.url, state);
       });
 
-      if (channel.url === state.feed.selectedChannel) {
+      if (channel.url === feed.selectedChannel) {
         let strItems = '';
 
         data.items.forEach((item) => {
@@ -127,4 +133,4 @@ const render = (state, handleOnClickChannel, texts) => {
   });
 };
 
-export default render;
+export default setWatches;

@@ -38,6 +38,7 @@
   "dependencies": {
     "axios": "^0.19.2",
     "bootstrap": "^4.4.1",
+    "date-fns": "^2.10.0",
     "i18next": "^19.1.0",
     "lodash": "^4.17.15",
     "melanke-watchjs": "^1.5.0",
