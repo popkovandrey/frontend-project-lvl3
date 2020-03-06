@@ -8,6 +8,8 @@ import resources from './locales';
 
 const proxy = 'https://cors-anywhere.herokuapp.com';
 
+const updateFeedInterval = 30000;
+
 const updateFeed = (url, state) => {
   const { feed } = state;
   const channel = _.find(feed.channels, { url });
@@ -38,7 +40,7 @@ const updateFeed = (url, state) => {
       }
     });
 
-  setTimeout(() => updateFeed(url, state), 5000);
+  setTimeout(() => updateFeed(url, state), updateFeedInterval);
 };
 
 const getFeed = (url, state) => {
