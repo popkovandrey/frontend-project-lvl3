@@ -36,7 +36,7 @@
     "webpack-dev-server": "^3.10.2"
   },
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "bootstrap": "^4.4.1",
     "date-fns": "^2.10.0",
     "i18next": "^19.1.0",
